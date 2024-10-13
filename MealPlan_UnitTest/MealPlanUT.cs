@@ -350,15 +350,6 @@ namespace MealPlan_UnitTest
             Assert.Equal("Invalid amount", paymentService.GetErrorMessage()); // Vérifie le message d'erreur
         }
 
-        [Fact]
-        
-
-
-
-
-
-
-
 
     }
 }
