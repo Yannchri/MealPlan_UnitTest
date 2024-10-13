@@ -236,6 +236,125 @@ namespace MealPlan_UnitTest
         }
 
 
+        [Fact]
+        public void Should_Process_Valid_Payment_And_Add_Transaction()
+        {
+            // Arrange
+            var mockTransactionRepository = new Mock<ITransactionHistoryService>();
+            var mockUserRepository = new Mock<IUserRepository>();
+
+            // Simuler un utilisateur valide
+            var user = new User { Id = 1, Name = "Alice Smith", Email = "alice@example.com" };
+            mockUserRepository.Setup(repo => repo.GetUserById(1)).Returns(user);
+
+            var paymentService = new PaymentService(mockTransactionRepository.Object, mockUserRepository.Object);
+            double validAmount = 100.0;
+            int validUserId = 1;
+
+            // Act
+            var result = paymentService.ProcessMealPayment(validUserId, validAmount);
+
+            // Assert
+            Assert.True(result); // Vérifie que le paiement est accepté
+            mockTransactionRepository.Verify(r => r.AddTransaction(It.IsAny<Transaction>()), Times.Once); // Vérifie que la transaction a été ajoutée
+        }
+
+
+
+        [Fact]
+        public void Should_Reject_Invalid_Payment_With_Negative_Amount()
+        {
+            // Arrange
+            var mockTransactionRepository = new Mock<ITransactionHistoryService>();
+            var mockUserRepository = new Mock<IUserRepository>();
+
+            // Simuler un utilisateur valide
+            var user = new User { Id = 1, Name = "Alice Smith", Email = "alice@example.com" };
+            mockUserRepository.Setup(repo => repo.GetUserById(1)).Returns(user);
+
+            var paymentService = new PaymentService(mockTransactionRepository.Object, mockUserRepository.Object);
+            double invalidAmount = -50.0; // Montant invalide
+            int validUserId = 1;
+
+            // Act
+            var result = paymentService.ProcessMealPayment(validUserId, invalidAmount);
+
+            // Assert
+            Assert.False(result); // Le paiement devrait être rejeté
+            Assert.Equal("Invalid amount", paymentService.GetErrorMessage()); // Vérifie le message d'erreur
+            mockTransactionRepository.Verify(r => r.AddTransaction(It.IsAny<Transaction>()), Times.Never); // Vérifie que la méthode AddTransaction n'a jamais été appelée
+        }
+    
+
+
+        [Fact]
+        public void Should_Return_ErrorMessage_When_Invalid_User()
+        {
+            // Arrange
+            var mockTransactionRepository = new Mock<ITransactionHistoryService>();
+            var fakeTransactionList = new List<Transaction>(); // Aucun utilisateur valide
+            mockTransactionRepository.Setup(repo => repo.GetTransactionsHistory(It.IsAny<int>())).Returns(fakeTransactionList);
+
+            var paymentService = new TransactionHistoryService(mockTransactionRepository.Object);
+            int invalidUserId = 25; // Utilisateur invalide
+            double validAmount = 100.0;
+
+            // Act
+            var result = paymentService.GetTransactionsHistory(invalidUserId);
+            var errorMessage = paymentService.GetErrorMessage();
+
+            // Assert
+            Assert.Empty(result); // Aucune transaction pour l'utilisateur invalide
+            Assert.Equal("User doesn't exist", errorMessage); // Message d'erreur correct
+        }
+
+
+        [Fact]
+        public void Should_Add_Transaction_When_Valid_User_And_Amount()
+        {
+            // Arrange
+            var mockTransactionRepository = new Mock<ITransactionHistoryService>();
+            var fakeTransactionList = createFakeTransactions();
+            mockTransactionRepository.Setup(repo => repo.GetTransactionsHistory(It.IsAny<int>())).Returns(fakeTransactionList);
+
+            var paymentService = new TransactionHistoryService(mockTransactionRepository.Object);
+            int userId = 1;
+            double validAmount = 100.0;
+
+            // Act
+            var result = paymentService.GetTransactionsHistory(userId);
+
+            // Assert
+            Assert.NotEmpty(result); // Il devrait y avoir des transactions
+            Assert.True(result.Count() > 0); // Assurer que des transactions ont bien été ajoutées
+        }
+
+        [Fact]
+        public void Should_Reject_Payment_With_Zero_Amount()
+        {
+            // Arrange
+            var mockTransactionRepository = new Mock<ITransactionHistoryService>();
+            var mockUserRepository = new Mock<IUserRepository>();
+
+            var user = new User { Id = 1, Name = "Alice Smith", Email = "alice@example.com" };
+            mockUserRepository.Setup(repo => repo.GetUserById(1)).Returns(user);
+
+            var paymentService = new PaymentService(mockTransactionRepository.Object, mockUserRepository.Object);
+            double zeroAmount = 0.0;
+
+            // Act
+            var result = paymentService.ProcessMealPayment(1, zeroAmount);
+
+            // Assert
+            Assert.False(result); // Le paiement devrait être rejeté
+            Assert.Equal("Invalid amount", paymentService.GetErrorMessage()); // Vérifie le message d'erreur
+        }
+
+        [Fact]
+        
+
+
+
 
 
 

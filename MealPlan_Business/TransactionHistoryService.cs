@@ -72,6 +72,11 @@ namespace MealPlan_Business
             return _errorMessage;
         }
 
+        public void AddTransaction(Transaction transaction)
+        {
+            _transactionHistoryService.AddTransaction(transaction);
+        }
+
     }
 
 

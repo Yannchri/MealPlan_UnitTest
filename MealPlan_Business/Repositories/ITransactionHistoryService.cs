@@ -13,6 +13,6 @@ namespace MealPlan_Business.Repositories
 
         public IEnumerable<Transaction> GetFilteredTransaction (int userId, DateOnly startDate, DateOnly endDate);
         public IEnumerable<Transaction> GetLatestTransaction(int userId, int limit);
-
+        void AddTransaction(Transaction transaction);
     }
 }
