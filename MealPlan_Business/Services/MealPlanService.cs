@@ -1,3 +1,4 @@
+using MealPlan_Business.Models;
 using MealPlan_Business.Repositories;
 
 namespace MealPlan_Business.Services;
@@ -26,5 +27,23 @@ public class MealPlanService(IMealPlanRepository mealPlanRepository, IUserReposi
         // Subscribe the user to the meal plan
         user.MealPlanId = mealPlanId;
         user.Credits -= mealPlan.Price;
+    }
+
+    public void CreateMealPlan(MealPlan newMealPlan)
+    {
+        if (newMealPlan == null) throw new ArgumentNullException(nameof(newMealPlan));
+        if (string.IsNullOrEmpty(newMealPlan.Name)) throw new ArgumentException("Meal plan name cannot be empty");
+        if (newMealPlan.startDate >= newMealPlan.endDate) throw new ArgumentException("Meal plan start date must be before end date");
+        if (newMealPlan.Price <= 0) throw new ArgumentException("Meal plan price must be greater than zero");
+
+        mealPlanRepository.AddMealPlan(newMealPlan);
+    }
+    
+    public IEnumerable<User> GetSubscribedUsers(int mealPlanId)
+    {
+        var mealPlan = mealPlanRepository.GetMealPlanById(mealPlanId);
+        if (mealPlan == null) throw new InvalidOperationException("Meal plan not found");
+
+        return userRepository.GetUsersByMealPlanId(mealPlanId);
     }
 }

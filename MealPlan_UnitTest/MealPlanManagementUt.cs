@@ -16,6 +16,8 @@ public class MealPlanManagementUt
         _mockUserRepo = new Mock<IUserRepository>();
         
         // Set up the mock objects
+        // Setup method to add a meal plan
+        _mockMealPlanRepo.Setup(repo => repo.AddMealPlan(It.IsAny<MealPlan>())).Verifiable();
         // Plan with id 1 is active
         _mockMealPlanRepo.Setup(x => x.GetMealPlanById(1)).Returns(new MealPlan { Id = 1, Name = "Student Plan - Weekly - Valid", startDate = DateTime.Now.Subtract(TimeSpan.FromDays(1)), endDate = DateTime.Now.Add(TimeSpan.FromDays(5)), Price = 35});
         // Plan with id 2 is not active
@@ -26,7 +28,6 @@ public class MealPlanManagementUt
         _mockUserRepo.Setup(x => x.GetUserById(2)).Returns(new User { Id = 2, Name = "Jane Doe", Credits = 10, Email = "jane.doe@test.ch"});
         // User with id 3 is already subscribed to a plan
         _mockUserRepo.Setup(x => x.GetUserById(3)).Returns(new User { Id = 3, Name = "Jack Doe", Credits = 50, Email = "jack.doe@test.ch", MealPlanId = 1});
-        
         _mealPlanService = new MealPlanService(_mockMealPlanRepo.Object, _mockUserRepo.Object);
     }
     
@@ -97,5 +98,70 @@ public class MealPlanManagementUt
 
         // Act & Assert
         Assert.Throws<InvalidOperationException>(() => _mealPlanService.SubscribeToPlan(user.Id, mealPlan.Id));
+    }
+    [Fact]
+    public void CreateMealPlan_ShouldAddMealPlanToRepository()
+    {
+        // Arrange
+        var newMealPlan = new MealPlan { Id = 3, Name = "New Plan", startDate = DateTime.Now, endDate = DateTime.Now.AddDays(7), Price = 50 };
+
+        // Act
+        _mealPlanService.CreateMealPlan(newMealPlan);
+
+        // Assert
+        _mockMealPlanRepo.Verify(repo => repo.AddMealPlan(It.Is<MealPlan>(mp => mp.Id == newMealPlan.Id && mp.Name == newMealPlan.Name)), Times.Once);
+    }
+    
+    [Fact]
+    public void CreateMealPlan_ShouldNotAllowEmptyName()
+    {
+        // Arrange
+        var newMealPlan = new MealPlan { Id = 3, Name = "", startDate = DateTime.Now, endDate = DateTime.Now.AddDays(7), Price = 50 };
+
+        // Act & Assert
+        Assert.Throws<ArgumentException>(() => _mealPlanService.CreateMealPlan(newMealPlan));
+    }
+    
+    [Fact]
+    public void CreateMealPlan_ShouldNotAllowStartDateAfterEndDate()
+    {
+        // Arrange
+        var newMealPlan = new MealPlan { Id = 3, Name = "New Plan", startDate = DateTime.Now.AddDays(7), endDate = DateTime.Now, Price = 50 };
+
+        // Act & Assert
+        Assert.Throws<ArgumentException>(() => _mealPlanService.CreateMealPlan(newMealPlan));
+    }
+    
+    [Fact]
+    public void CreateMealPlan_ShouldNotAllowPriceLessOrEqualToZero()
+    {
+        // Arrange
+        var newMealPlan = new MealPlan { Id = 3, Name = "New Plan", startDate = DateTime.Now, endDate = DateTime.Now.AddDays(7), Price = 0 };
+
+        // Act & Assert
+        Assert.Throws<ArgumentException>(() => _mealPlanService.CreateMealPlan(newMealPlan));
+    }
+
+    [Fact]
+    public void GetSubscribedUsers_ShouldNotAllowIfMealPlanDoesNotExist()
+    {
+        // Arrange
+        var mealPlanId = -1;
+
+        // Act & Assert
+        Assert.Throws<InvalidOperationException>(() => _mealPlanService.GetSubscribedUsers(mealPlanId));
+    }
+    
+    [Fact]
+    public void GetSubscribedUsers_ShouldReturnEmptyListIfNoUsersSubscribed()
+    {
+        // Arrange
+        var mealPlan = _mockMealPlanRepo.Object.GetMealPlanById(2);
+
+        // Act
+        var users = _mealPlanService.GetSubscribedUsers(mealPlan.Id);
+
+        // Assert
+        Assert.Empty(users);
     }
 }

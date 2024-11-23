@@ -8,4 +8,9 @@ public class MealPlanRepository : IMealPlanRepository
     {
         throw new NotImplementedException();
     }
+
+    public void AddMealPlan(MealPlan mealPlan)
+    {
+        throw new NotImplementedException();
+    }
 }
