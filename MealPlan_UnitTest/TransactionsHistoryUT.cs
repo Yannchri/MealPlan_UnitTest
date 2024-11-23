@@ -1,11 +1,11 @@
 using MealPlan_Business;
 using MealPlan_Business.Models;
-using MealPlan_Business.Repositories;
+using MealPlan_Business.Services;
 using Moq;
 
 namespace MealPlan_UnitTest;
 
-public class MealPlanUT
+public class TransactionsHistoryUT
 {
     private List<MealTransaction> fakeTransactions;
 
