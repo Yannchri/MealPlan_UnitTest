@@ -21,26 +21,26 @@ namespace MealPlan_Business
         }
 
 
-        public IEnumerable<Transaction> GetTransactionsHistory(int userId)
+        public IEnumerable<MealTransaction> GetTransactionsHistory(int userId)
         {
-            var transactions = _transactionHistoryService.GetTransactionsHistory(userId).Where(t => t.User.Id == userId);
+            var transactions = _transactionHistoryService.GetTransactionsHistory(userId).Where(t => t.UserId == userId);
 
             // Vérifier si aucune transaction n'a été trouvée
             if (!transactions.Any())
             {
                 _errorMessage = "User doesn't exist";
-                return new List<Transaction>(); // Retourne une liste vide si l'utilisateur n'existe pas
+                return new List<MealTransaction>(); // Retourne une liste vide si l'utilisateur n'existe pas
             }
 
             return transactions;
 
         }
 
-        public IEnumerable<Transaction> GetFilteredTransaction(int userId, DateOnly startDate, DateOnly endDate)
+        public IEnumerable<MealTransaction> GetFilteredTransaction(int userId, DateTime startDate, DateTime endDate)
         {
            
             var transactions = _transactionHistoryService.GetTransactionsHistory(userId)
-                .Where(t => t.User.Id == userId); // Accéder à l'ID via l'objet User
+                .Where(t => t.UserId == userId); // Accéder à l'ID via l'objet User
 
             // Filtrer les transactions selon la plage de dates
             var filteredTransactions = transactions.Where(t => t.Date >= startDate && t.Date <= endDate);
@@ -48,7 +48,7 @@ namespace MealPlan_Business
             if(startDate>endDate)
             {
                 _errorMessage = "First date must be older than second date";
-                return new List<Transaction>();
+                return new List<MealTransaction>();
             }
 
             return filteredTransactions;
@@ -56,11 +56,11 @@ namespace MealPlan_Business
 
 
 
-        public IEnumerable<Transaction> GetLatestTransaction(int userId, int limit)
+        public IEnumerable<MealTransaction> GetLatestTransaction(int userId, int limit)
         {
             
             var transactions = _transactionHistoryService.GetTransactionsHistory(userId)
-                .Where(t => t.User.Id == userId) // Accéder à l'ID via l'objet User
+                .Where(t => t.UserId == userId) // Accéder à l'ID via l'objet User
                 .OrderByDescending(t => t.Date) // Trier les transactions par date décroissante
                 .Take(limit); // Prendre seulement les X dernières transactions
 
@@ -73,7 +73,5 @@ namespace MealPlan_Business
         }
 
     }
-
-
 }
 

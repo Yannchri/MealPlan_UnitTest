@@ -9,10 +9,10 @@ namespace MealPlan_Business.Repositories
 {
     public  interface ITransactionHistoryService
     {
-        public IEnumerable<Transaction> GetTransactionsHistory (int userId);
+        public IEnumerable<MealTransaction> GetTransactionsHistory (int userId);
 
-        public IEnumerable<Transaction> GetFilteredTransaction (int userId, DateOnly startDate, DateOnly endDate);
-        public IEnumerable<Transaction> GetLatestTransaction(int userId, int limit);
+        public IEnumerable<MealTransaction> GetFilteredTransaction (int userId, DateOnly startDate, DateOnly endDate);
+        public IEnumerable<MealTransaction> GetLatestTransaction(int userId, int limit);
 
     }
 }
