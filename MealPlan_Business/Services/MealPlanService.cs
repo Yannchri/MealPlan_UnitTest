@@ -31,14 +31,15 @@ public class MealPlanService(IMealPlanRepository mealPlanRepository, IUserReposi
 
     public void CreateMealPlan(MealPlan newMealPlan)
     {
-        if (newMealPlan == null) throw new ArgumentNullException(nameof(newMealPlan));
+        ArgumentNullException.ThrowIfNull(newMealPlan);
         if (string.IsNullOrEmpty(newMealPlan.Name)) throw new ArgumentException("Meal plan name cannot be empty");
-        if (newMealPlan.startDate >= newMealPlan.endDate) throw new ArgumentException("Meal plan start date must be before end date");
+        if (newMealPlan.startDate >= newMealPlan.endDate)
+            throw new ArgumentException("Meal plan start date must be before end date");
         if (newMealPlan.Price <= 0) throw new ArgumentException("Meal plan price must be greater than zero");
 
         mealPlanRepository.AddMealPlan(newMealPlan);
     }
-    
+
     public IEnumerable<User> GetSubscribedUsers(int mealPlanId)
     {
         var mealPlan = mealPlanRepository.GetMealPlanById(mealPlanId);
