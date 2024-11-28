@@ -13,4 +13,9 @@ public class MealPlanRepository : IMealPlanRepository
     {
         throw new NotImplementedException();
     }
+
+    public decimal GetMealPlanPrice(int mealPlanId)
+    {
+        throw new NotImplementedException();
+    }
 }

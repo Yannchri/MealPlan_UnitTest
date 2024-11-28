@@ -47,4 +47,12 @@ public class MealPlanService(IMealPlanRepository mealPlanRepository, IUserReposi
 
         return userRepository.GetUsersByMealPlanId(mealPlanId);
     }
+
+    public decimal GetMealPlanPrice(int mealPlanId)
+    {
+        var mealPlan = mealPlanRepository.GetMealPlanById(mealPlanId);
+        if (mealPlan == null) throw new InvalidOperationException("Meal plan not found");
+
+        return mealPlan.Price;
+    }
 }

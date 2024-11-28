@@ -6,4 +6,5 @@ public interface IMealPlanRepository
 {
     MealPlan GetMealPlanById(int mealPlanId);
     void AddMealPlan(MealPlan mealPlan);
+    decimal GetMealPlanPrice(int mealPlanId);
 }
