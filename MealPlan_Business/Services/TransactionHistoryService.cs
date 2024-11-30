@@ -1,63 +1,93 @@
 ﻿using MealPlan_Business.Models;
+using MealPlan_Business.Repositories;
 using MealPlan_Business.Services;
+using System;
+using System.Transactions;
 
-namespace MealPlan_Business;
-
-public class TransactionHistoryService
+namespace MealPlan_Business
 {
-    private readonly ITransactionHistoryService _transactionHistoryService;
-    private string _errorMessage;
-
-    public TransactionHistoryService(ITransactionHistoryService transactionHistoryService)
+ 
+    public class TransactionHistoryService : ITransactionHistoryService
     {
-        _transactionHistoryService = transactionHistoryService;
-    }
+        // Repository to handle data access for transaction history.
+        private readonly ITransactionHistoryRepository _transactionHistoryRepository;
 
-
-    public IEnumerable<MealTransaction> GetTransactionsHistory(int userId)
-    {
-        var transactions = _transactionHistoryService.GetTransactionsHistory(userId).Where(t => t.UserId == userId);
-
-        // Vérifier si aucune transaction n'a été trouvée
-        if (!transactions.Any())
+        public TransactionHistoryService(ITransactionHistoryRepository transactionHistoryRepository)
         {
-            _errorMessage = "User doesn't exist";
-            return new List<MealTransaction>(); // Retourne une liste vide si l'utilisateur n'existe pas
+            // Ensure the repository is not null to prevent runtime errors.
+            _transactionHistoryRepository = transactionHistoryRepository ?? throw new ArgumentNullException(nameof(transactionHistoryRepository));
         }
 
-        return transactions;
-    }
-
-    public IEnumerable<MealTransaction> GetFilteredTransaction(int userId, DateTime startDate, DateTime endDate)
-    {
-        var transactions = _transactionHistoryService.GetTransactionsHistory(userId)
-            .Where(t => t.UserId == userId); // Accéder à l'ID via l'objet User
-
-        // Filtrer les transactions selon la plage de dates
-        var filteredTransactions = transactions.Where(t => t.Date >= startDate && t.Date <= endDate);
-
-        if (startDate > endDate)
+        /// Retrieves all transactions for a given user.
+        public IEnumerable<MealTransaction> GetTransactionsHistory(int userId)
         {
-            _errorMessage = "First date must be older than second date";
-            return new List<MealTransaction>();
+            // Validate the provided user ID.
+            ValidateUserId(userId);
+
+            // Fetch transactions from the repository.
+            var transactions = _transactionHistoryRepository.GetTransactionsByUserId(userId);
+
+            // Explicit check to ensure transactions exist for the given user.
+            if (transactions == null || !transactions.Any())
+            {
+                throw new InvalidOperationException($"No transactions found for user with ID {userId}.");
+            }
+
+            return transactions;
         }
 
-        return filteredTransactions;
-    }
+        /// Retrieves transactions for a user within a specific date range.
+        public IEnumerable<MealTransaction> GetFilteredTransaction(int userId, DateTime startDate, DateTime endDate)
+        {
+            // Validate the user ID and the date range.
+            ValidateUserId(userId);
+            ValidateDateRange(startDate, endDate);
+
+            // Fetch transactions within the specified range.
+            var transactions = _transactionHistoryRepository.GetTransactionsByPeriodOfTime(userId, startDate, endDate)
+                ?? throw new InvalidOperationException("No transactions found for the given date range.");
+
+            return transactions;
+        }
+
+        /// Retrieves the latest transactions for a user, limited to a specific number.
+        public IEnumerable<MealTransaction> GetLatestTransaction(int userId, int number)
+        {
+            // Validate the user ID.
+            ValidateUserId(userId);
+
+            // If the requested number is less than or equal to 0, return an empty list.
+            if (number <= 0) return Enumerable.Empty<MealTransaction>();
+
+            // Retrieve all transactions for the user.
+            var transactions = _transactionHistoryRepository.GetTransactionsByUserId(userId)
+                ?? throw new InvalidOperationException("Unable to retrieve transactions for this user.");
+
+            // If the requested number exceeds the total transactions, return all transactions.
+            return number >= transactions.Count()
+                ? transactions
+                : _transactionHistoryRepository.GetLastXTransactions(userId, number)
+                  ?? throw new InvalidOperationException($"Unable to retrieve the last {number} transactions.");
+        }
 
 
-    public IEnumerable<MealTransaction> GetLatestTransaction(int userId, int limit)
-    {
-        var transactions = _transactionHistoryService.GetTransactionsHistory(userId)
-            .Where(t => t.UserId == userId) // Accéder à l'ID via l'objet User
-            .OrderByDescending(t => t.Date) // Trier les transactions par date décroissante
-            .Take(limit); // Prendre seulement les X dernières transactions
+        /// Validates that a user ID is a positive integer.
+        private static void ValidateUserId(int userId)
+        {
+            if (userId <= 0)
+                throw new ArgumentException("User ID must be a positive integer.", nameof(userId));
+        }
 
-        return transactions;
-    }
+        /// Validates that a date range is valid and logical.
+        private static void ValidateDateRange(DateTime startDate, DateTime endDate)
+        {
+            // Ensure both dates are non-default and valid.
+            if (startDate == DateTime.MinValue || endDate == DateTime.MinValue)
+                throw new ArgumentException("Start date and end date must be valid non-default dates.");
 
-    public string GetErrorMessage()
-    {
-        return _errorMessage;
+            // Ensure the start date is earlier than or equal to the end date.
+            if (startDate > endDate)
+                throw new ArgumentException("Start date must be earlier than or equal to the end date.");
+        }
     }
 }

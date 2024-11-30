@@ -1,172 +1,153 @@
 using MealPlan_Business;
 using MealPlan_Business.Models;
+using MealPlan_Business.Repositories;
 using MealPlan_Business.Services;
 using Moq;
 
 namespace MealPlan_UnitTest;
-
 public class TransactionsHistoryUT
 {
-    private readonly Mock<ITransactionHistoryService> _mockTransactionRepo;
+    // Mock repository for simulating data access without a real database.
+    private readonly Mock<ITransactionHistoryRepository> _mockTransactionRepo;
+
+    // The service under test, initialized with the mocked repository.
     private readonly TransactionHistoryService _transactionService;
 
     public TransactionsHistoryUT()
     {
-        _mockTransactionRepo = new Mock<ITransactionHistoryService>();
+        // Initialize the mock repository.
+        _mockTransactionRepo = new Mock<ITransactionHistoryRepository>();
+
+        // Inject the mocked repository into the service.
         _transactionService = new TransactionHistoryService(_mockTransactionRepo.Object);
+
+        // Predefined fake data to be used in the tests.
+        var fakeTransactions = GenerateFakeTransactions();
+        var startDate = new DateTime(2024, 10, 01);
+        var endDate = new DateTime(2024, 10, 02);
+
+        // A specific transaction used for certain test cases.
+        var fakeTransaction = new MealTransaction
+        {
+            Id = 2,
+            Amount = 30.0m,
+            Date = new DateTime(2024, 10, 02),
+            UserId = 1
+        };
+
+        // Configure mock behaviors for the repository methods.
+
+        // Returns all transactions for user ID 1.
+        _mockTransactionRepo.Setup(repo => repo.GetTransactionsByUserId(1)).Returns(fakeTransactions);
+
+        // Returns an empty list for invalid user ID 5.
+        _mockTransactionRepo.Setup(repo => repo.GetTransactionsByUserId(5)).Returns(new List<MealTransaction>());
+
+        // Returns transactions within the specified date range for user ID 1.
+        _mockTransactionRepo.Setup(repo => repo.GetTransactionsByPeriodOfTime(1, startDate, endDate))
+                     .Returns(fakeTransactions);
+
+        // Returns the latest transaction for user ID 1 with a limit of 1.
+        _mockTransactionRepo.Setup(repo => repo.GetLastXTransactions(1, 1))
+                            .Returns(new List<MealTransaction> { fakeTransaction });
     }
 
+    /// Generates a predefined list of fake transactions for use in tests.
     private static List<MealTransaction> GenerateFakeTransactions() => new()
     {
         new MealTransaction { Id = 1, Amount = 50.0m, Date = new DateTime(2024, 10, 01), UserId = 1 },
-        new MealTransaction { Id = 2, Amount = 30.0m, Date = new DateTime(2024, 10, 02), UserId = 2 },
-        new MealTransaction { Id = 3, Amount = 75.0m, Date = new DateTime(2024, 10, 03), UserId = 3 },
-        new MealTransaction { Id = 4, Amount = 100.0m, Date = new DateTime(2024, 10, 04), UserId = 1 },
-        new MealTransaction { Id = 5, Amount = 40.0m, Date = new DateTime(2024, 10, 05), UserId = 2 },
-        new MealTransaction { Id = 6, Amount = 60.0m, Date = new DateTime(2024, 10, 06), UserId = 3 },
-        new MealTransaction { Id = 7, Amount = 20.0m, Date = new DateTime(2024, 10, 07), UserId = 1 },
-        new MealTransaction { Id = 8, Amount = 90.0m, Date = new DateTime(2024, 10, 08), UserId = 2 },
-        new MealTransaction { Id = 9, Amount = 10.0m, Date = new DateTime(2024, 10, 09), UserId = 3 },
-        new MealTransaction { Id = 10, Amount = 25.0m, Date = new DateTime(2024, 10, 10), UserId = 1 }
+        new MealTransaction { Id = 2, Amount = 30.0m, Date = new DateTime(2024, 10, 02), UserId = 1 },
     };
 
-    [Fact]
-    public void GetAllTheTransactionForUser1_ShouldReturn4Transactions()
-    {
-        // Arrange
-        var transactions = GenerateFakeTransactions();
-        _mockTransactionRepo.Setup(repo => repo.GetTransactionsHistory(1))
-                            .Returns(transactions.Where(t => t.UserId == 1).ToList());
 
+    [Fact]
+    public void GetTransactionsHistory_ValidUser_ShouldReturnAllTransactions()
+    {
         // Act
         var result = _transactionService.GetTransactionsHistory(1);
 
-        // Assert
-        Assert.Equal(4, result.Count());
+        // Assert: Check that the result is not empty and contains the expected number of transactions.
+        Assert.NotEmpty(result);
+        Assert.Equal(2, result.Count());
     }
 
     [Fact]
-    public void GetAllTransactionFromInexistingUser_ShouldReturn0Transaction()
+    public void GetTransactionsHistory_InvalidUser_ShouldThrowException()
     {
-        // Arrange
-        _mockTransactionRepo.Setup(repo => repo.GetTransactionsHistory(5)).Returns(new List<MealTransaction>());
+        // Act & Assert: Ensure that calling the method with an invalid user ID throws an exception.
+        Assert.Throws<InvalidOperationException>(() => _transactionService.GetTransactionsHistory(5));
+    }
+
+    [Fact]
+    public void GetFilteredTransaction_ValidDateRange_ShouldReturnTransactions()
+    {
+        // Arrange: Define a date range for the test.
+        var startDate = new DateTime(2024, 10, 01);
+        var endDate = new DateTime(2024, 10, 02);
 
         // Act
-        var result = _transactionService.GetTransactionsHistory(5);
+        var result = _transactionService.GetFilteredTransaction(1, startDate, endDate);
 
-        // Assert
+        // Assert: Check that the result contains the expected number of transactions.
+        Assert.Equal(2, result.Count());
+    }
+
+    [Fact]
+    public void GetFilteredTransaction_InvalidDateRange_ShouldThrowException()
+    {
+        // Arrange: Define an invalid date range.
+        var startDate = new DateTime(2024, 10, 02);
+        var endDate = new DateTime(2024, 10, 01);
+
+        // Act & Assert: Ensure that calling the method with an invalid range throws an exception.
+        Assert.Throws<ArgumentException>(() => _transactionService.GetFilteredTransaction(1, startDate, endDate));
+    }
+
+ 
+    [Fact]
+    public void GetFilteredTransaction_NoTransactionsInDateRange_ShouldReturnEmptyList()
+    {
+        // Arrange: Define a date range with no transactions.
+        var startDate = new DateTime(2024, 11, 01);
+        var endDate = new DateTime(2024, 11, 02);
+
+        // Act
+        var result = _transactionService.GetFilteredTransaction(1, startDate, endDate);
+
+        // Assert: Check that the result is an empty list.
         Assert.Empty(result);
     }
 
+ 
     [Fact]
-    public void GetAllTransactionFromInexistingUser_ShouldReturnErrorMessage()
+    public void GetLatestTransaction_ValidNumber_ShouldReturnSpecifiedTransactions()
     {
-        // Arrange
-        _mockTransactionRepo.Setup(repo => repo.GetTransactionsHistory(5)).Returns(new List<MealTransaction>());
-
         // Act
-        var result = _transactionService.GetTransactionsHistory(5);
-        var errorMessage = _transactionService.GetErrorMessage();
+        var result = _transactionService.GetLatestTransaction(1, 1);
 
-        // Assert
-        Assert.Equal("User doesn't exist", errorMessage);
-    }
-
-    [Fact]
-    public void GetFilterTransactionForToday_ShouldReturnTransactionOfTheDay()
-    {
-        // Arrange
-        var transactions = GenerateFakeTransactions();
-        var today = new DateTime(2024, 10, 09);
-        _mockTransactionRepo.Setup(repo => repo.GetTransactionsHistory(3))
-                            .Returns(transactions.Where(t => t.UserId == 3).ToList());
-
-        // Act
-        var result = _transactionService.GetFilteredTransaction(3, today, today);
-
-        // Assert
+        // Assert: Check that the result contains a single transaction with the expected date.
         Assert.Single(result);
+        Assert.Equal(new DateTime(2024, 10, 02), result.First().Date);
     }
 
     [Fact]
-    public void GetFilterTransactionAPeriod_ShouldReturnTransactionOfThePeriod()
+    public void GetLatestTransaction_NumberExceedsTotal_ShouldReturnAllTransactions()
     {
-        // Arrange
-        var transactions = GenerateFakeTransactions();
-        var firstDate = new DateTime(2024, 10, 05);
-        var secondDate = new DateTime(2024, 10, 10);
-        _mockTransactionRepo.Setup(repo => repo.GetTransactionsHistory(3))
-                            .Returns(transactions.Where(t => t.UserId == 3).ToList());
-
-        // Act
-        var result = _transactionService.GetFilteredTransaction(3, firstDate, secondDate);
-
-        // Assert
-        Assert.Equal(2, result.Count());
-    }
-
-    [Fact]
-    public void VerifyTheFirstDateAndLastDate_ShouldReturnAnErrorMessage()
-    {
-        // Arrange
-        var transactions = GenerateFakeTransactions();
-        var firstDate = new DateTime(2024, 10, 10);
-        var secondDate = new DateTime(2024, 10, 05);
-        _mockTransactionRepo.Setup(repo => repo.GetTransactionsHistory(3))
-                            .Returns(transactions.Where(t => t.UserId == 3).ToList());
-
-        // Act
-        var result = _transactionService.GetFilteredTransaction(3, firstDate, secondDate);
-        var errorMessage = _transactionService.GetErrorMessage();
-
-        // Assert
-        Assert.Equal("First date must be older than second date", errorMessage);
-    }
-
-    [Fact]
-    public void GetTheLast2Transactions_ShouldReturn2TransactionsAndTheGoodDate()
-    {
-        // Arrange
-        var transactions = GenerateFakeTransactions();
-        _mockTransactionRepo.Setup(repo => repo.GetTransactionsHistory(1))
-                            .Returns(transactions.Where(t => t.UserId == 1).ToList());
-
-        // Act
-        var result = _transactionService.GetLatestTransaction(1, 2);
-
-        // Assert
-        Assert.Equal(2, result.Count());
-        Assert.Equal(new DateTime(2024, 10, 10), result.First().Date);
-        Assert.Equal(new DateTime(2024, 10, 07), result.Last().Date);
-    }
-
-    [Fact]
-    public void AskMoreThanTheMaxTransaction_ShouldReturnAllTheTransactions()
-    {
-        // Arrange
-        var transactions = GenerateFakeTransactions();
-        _mockTransactionRepo.Setup(repo => repo.GetTransactionsHistory(1))
-                            .Returns(transactions.Where(t => t.UserId == 1).ToList());
-
         // Act
         var result = _transactionService.GetLatestTransaction(1, 10);
 
-        // Assert
-        Assert.Equal(4, result.Count());
+        // Assert: Check that all transactions are returned.
+        Assert.Equal(2, result.Count());
     }
 
-    [Fact]
-    public void GetAllTransactionsWithNegativeNumber_ShouldReturnEmptyList()
-    {
-        // Arrange
-        var transactions = GenerateFakeTransactions();
-        _mockTransactionRepo.Setup(repo => repo.GetTransactionsHistory(1))
-                            .Returns(transactions.Where(t => t.UserId == 1).ToList());
 
+    [Fact]
+    public void GetLatestTransaction_NegativeNumber_ShouldReturnEmptyList()
+    {
         // Act
         var result = _transactionService.GetLatestTransaction(1, -1);
 
-        // Assert
+        // Assert: Check that the result is an empty list.
         Assert.Empty(result);
     }
 }
