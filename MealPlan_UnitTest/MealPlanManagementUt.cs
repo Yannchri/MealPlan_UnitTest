@@ -183,4 +183,27 @@ public class MealPlanManagementUt
         // Assert
         Assert.Empty(users);
     }
+    
+    [Fact]
+    public void GetMealPlanPrice_ShouldReturnPrice_WhenValid()
+    {
+        // Arrange
+        var mealPlan = _mockMealPlanRepo.Object.GetMealPlanById(1);
+
+        // Act
+        var price = _mealPlanService.GetMealPlanPrice(mealPlan.Id);
+
+        // Assert
+        Assert.Equal(mealPlan.Price, price);
+    }
+    
+    [Fact]
+    public void GetMealPlanPrice_ShouldNotAllowIfMealPlanDoesNotExist()
+    {
+        // Arrange
+        var mealPlanId = -1;
+
+        // Act & Assert
+        Assert.Throws<InvalidOperationException>(() => _mealPlanService.GetMealPlanPrice(mealPlanId));
+    }
 }

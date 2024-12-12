@@ -31,10 +31,14 @@ public class MealPlanService(IMealPlanRepository mealPlanRepository, IUserReposi
 
     public void CreateMealPlan(MealPlan newMealPlan)
     {
+        // Validate the meal plan
         ArgumentNullException.ThrowIfNull(newMealPlan);
+        // Check if the meal plan name is empty
         if (string.IsNullOrEmpty(newMealPlan.Name)) throw new ArgumentException("Meal plan name cannot be empty");
+        // Check if the start date is before the end date
         if (newMealPlan.startDate >= newMealPlan.endDate)
             throw new ArgumentException("Meal plan start date must be before end date");
+        // Check if the price is greater than zero
         if (newMealPlan.Price <= 0) throw new ArgumentException("Meal plan price must be greater than zero");
 
         mealPlanRepository.AddMealPlan(newMealPlan);
@@ -42,7 +46,9 @@ public class MealPlanService(IMealPlanRepository mealPlanRepository, IUserReposi
 
     public IEnumerable<User> GetSubscribedUsers(int mealPlanId)
     {
+        // Get the meal plan
         var mealPlan = mealPlanRepository.GetMealPlanById(mealPlanId);
+        // Check if the meal plan exists
         if (mealPlan == null) throw new InvalidOperationException("Meal plan not found");
 
         return userRepository.GetUsersByMealPlanId(mealPlanId);
@@ -50,7 +56,9 @@ public class MealPlanService(IMealPlanRepository mealPlanRepository, IUserReposi
 
     public decimal GetMealPlanPrice(int mealPlanId)
     {
+        // Get the meal plan
         var mealPlan = mealPlanRepository.GetMealPlanById(mealPlanId);
+        // Check if the meal plan exists
         if (mealPlan == null) throw new InvalidOperationException("Meal plan not found");
 
         return mealPlan.Price;
