@@ -14,6 +14,6 @@ namespace MealPlan_Business.Repositories
         IEnumerable<MealTransaction> GetTransactionsByPeriodOfTime(int userId, DateTime startDate, DateTime endDate);
 
         IEnumerable<MealTransaction> GetLastXTransactions(int userId, int numberOfTransactions);
-
+        MealTransaction GetTransactionbyId(int id);
     }
 }

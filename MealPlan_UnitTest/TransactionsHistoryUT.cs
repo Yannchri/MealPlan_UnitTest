@@ -40,6 +40,8 @@ public class TransactionsHistoryUT
         // Returns all transactions for user ID 1.
         _mockTransactionRepo.Setup(repo => repo.GetTransactionsByUserId(1)).Returns(fakeTransactions);
 
+        _mockTransactionRepo.Setup(repo => repo.GetTransactionbyId(2)).Returns(fakeTransaction);
+
         // Returns an empty list for invalid user ID 5.
         _mockTransactionRepo.Setup(repo => repo.GetTransactionsByUserId(5)).Returns(new List<MealTransaction>());
 
@@ -159,5 +161,30 @@ public class TransactionsHistoryUT
 
         // Assert: Check that the result is an empty list.
         Assert.Throws<ArgumentException>(() => _transactionService.GetTransactionsHistory(userid));
+    }
+
+    [Fact]
+    public void GetTransactionId_NegativeNumber_ShouldReturnError()
+    {
+        // Act
+        var transactionId = -1;
+
+        // Assert: Check that the result is an empty list.
+        Assert.Throws<ArgumentException>(() => _transactionService.getTransactionbyId(transactionId));
+    }
+
+    [Fact]
+    public void GetTransactionId_valideNumber_ShouldReturnTheTransaction()
+    {
+        // Act
+        var result = _transactionService.getTransactionbyId(2);
+
+        // Assert: Check that the result is not null
+        Assert.NotNull(result);
+
+        // Assert: Check that the ID of the result matches the requested ID
+        Assert.Equal(2, result.Id);
+
+
     }
 }

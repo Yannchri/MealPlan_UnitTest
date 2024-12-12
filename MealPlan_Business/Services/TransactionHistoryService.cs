@@ -3,6 +3,7 @@ using MealPlan_Business.Repositories;
 using MealPlan_Business.Services;
 using System;
 using System.Transactions;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace MealPlan_Business
 {
@@ -68,6 +69,16 @@ namespace MealPlan_Business
                 ? transactions
                 : _transactionHistoryRepository.GetLastXTransactions(userId, number)
                   ?? throw new InvalidOperationException($"Unable to retrieve the last {number} transactions.");
+        }
+
+        public MealTransaction getTransactionbyId(int id)
+        {
+            if(id <= 0)
+            {
+                throw new ArgumentException($"Transaction ID must be positive");
+            }
+
+            return _transactionHistoryRepository.GetTransactionbyId(id);
         }
 
 

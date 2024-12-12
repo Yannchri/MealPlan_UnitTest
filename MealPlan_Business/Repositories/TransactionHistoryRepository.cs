@@ -23,5 +23,9 @@ namespace MealPlan_Business.Repositories
         {
             throw new NotImplementedException();
         }
+
+        public MealTransaction GetTransactionbyId(int id ) { 
+            throw new NotImplementedException(); 
+        }
     }
 }
