@@ -81,10 +81,6 @@ namespace MealPlan_Business
         /// Validates that a date range is valid and logical.
         private static void ValidateDateRange(DateTime startDate, DateTime endDate)
         {
-            // Ensure both dates are non-default and valid.
-            if (startDate == DateTime.MinValue || endDate == DateTime.MinValue)
-                throw new ArgumentException("Start date and end date must be valid non-default dates.");
-
             // Ensure the start date is earlier than or equal to the end date.
             if (startDate > endDate)
                 throw new ArgumentException("Start date must be earlier than or equal to the end date.");

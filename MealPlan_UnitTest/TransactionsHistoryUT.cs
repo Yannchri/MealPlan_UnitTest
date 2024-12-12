@@ -150,4 +150,14 @@ public class TransactionsHistoryUT
         // Assert: Check that the result is an empty list.
         Assert.Empty(result);
     }
+
+    [Fact]
+    public void GetUserID_NegativeNumber_ShouldReturnError()
+    {
+        // Act
+        var userid = - 1;
+
+        // Assert: Check that the result is an empty list.
+        Assert.Throws<ArgumentException>(() => _transactionService.GetTransactionsHistory(userid));
+    }
 }
