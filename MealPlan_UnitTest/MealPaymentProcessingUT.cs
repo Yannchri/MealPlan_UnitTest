@@ -48,6 +48,32 @@ public class MealPaymentProcessingUt
     }
 
     [Fact]
+    public void ProcessMealPayment_ShouldThrowExceptionWithCorrectMessage_WhenUserPlanNotFound()
+    {
+        // Arrange
+        int userId = -1; // Utilisateur valide
+        int mealId = 1; // Plan de repas inexistant
+
+        // Act
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            _paymentService.ProcessMealPayment(userId, 50.0m, mealId));
+
+        // Assert
+        Assert.Equal("User not found", exception.Message);
+    }
+
+    [Fact]
+    public void ProcessMealPayment_ShouldThrowException_WhenUserIsNull()
+    {
+        // Arrange
+        int userId = 6, mealId = 1;
+
+        // Act & Assert
+        Assert.Throws<InvalidOperationException>(() =>
+            _paymentService.ProcessMealPayment(userId, 50.0m, mealId));
+    }
+
+    [Fact]
     public void ProcessMealPayment_ShouldThrowException_WhenMealPlanNotFound()
     {
         // Arrange
@@ -56,6 +82,21 @@ public class MealPaymentProcessingUt
         // Act & Assert
         Assert.Throws<InvalidOperationException>(() =>
             _paymentService.ProcessMealPayment(userId, 50.0m, mealId));
+    }
+
+    [Fact]
+    public void ProcessMealPayment_ShouldThrowExceptionWithCorrectMessage_WhenMealPlanNotFound()
+    {
+        // Arrange
+        int userId = 1; // Utilisateur valide
+        int mealId = -1; // Plan de repas inexistant
+
+        // Act
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            _paymentService.ProcessMealPayment(userId, 50.0m, mealId));
+
+        // Assert
+        Assert.Equal("Meal plan not found", exception.Message);
     }
 
     [Fact]
@@ -115,5 +156,60 @@ public class MealPaymentProcessingUt
         // Assert
         Assert.Equal(2, _transactions.Count);
     }
+
+    [Fact]
+    public void ProcessMealPayment_ShouldDeductCredits_WhenPaymentIsSuccessful()
+    {
+        // Arrange
+        int userId = 1, mealId = 1;
+
+        // Act
+        _paymentService.ProcessMealPayment(userId, 50.0m, mealId);
+
+        // Assert
+        var user = _mockUserRepository.Object.GetUserById(userId);
+        Assert.Equal(50.0m, user.Credits); // 100 - 50
+    }
+
+    [Fact]
+    public void ProcessMealPayment_ShouldThrowException_WhenMealPlanPriceIsZero()
+    {
+        // Arrange
+        int userId = 1, mealId = 3;
+        _mockMealPlanRepository.Setup(repo => repo.GetMealPlanPrice(mealId)).Returns(0m);
+
+        // Act & Assert
+        Assert.Throws<InvalidOperationException>(() =>
+            _paymentService.ProcessMealPayment(userId, 50.0m, mealId));
+    }
+
+    [Fact]
+    public void ProcessMealPayment_ShouldNotDeductCredits_WhenPaymentFails()
+    {
+        // Arrange
+        int userId = 2, mealId = 2;
+
+        // Act
+        _paymentService.ProcessMealPayment(userId, 100.0m, mealId);
+
+        // Assert
+        var user = _mockUserRepository.Object.GetUserById(userId);
+        Assert.Equal(50.0m, user.Credits); // 50 - 100
+    }
+
+    [Fact]
+    public void ProcessMealPayment_ShouldNotAddTransaction_WhenPaymentFails()
+    {
+        // Arrange
+        int userId = 2, mealId = 2;
+
+        // Act
+        _paymentService.ProcessMealPayment(userId, 100.0m, mealId);
+
+        // Assert
+        Assert.Empty(_transactions);
+    }
+
+
 }
 
