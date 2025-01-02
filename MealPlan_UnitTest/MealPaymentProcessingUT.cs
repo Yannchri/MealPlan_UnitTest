@@ -15,29 +15,29 @@ public class MealPaymentProcessingUt
 
     public MealPaymentProcessingUt()
     {
-        // Configuration des mocks
+        //Configuration of the mock objects
         _mockMealPlanRepository = new Mock<IMealPlanRepository>();
         _mockUserRepository = new Mock<IUserRepository>();
 
-        // Prix pour les plans de repas
+        //Price of the meal
         _mockMealPlanRepository.Setup(service => service.GetMealPlanPrice(1)).Returns(50.0m);
         _mockMealPlanRepository.Setup(service => service.GetMealPlanPrice(2)).Returns(100.0m);
         _mockMealPlanRepository.Setup(service => service.GetMealPlanPrice(It.Is<int>(id => id < 0)))
             .Throws(new InvalidOperationException("Meal plan not found"));
 
-        // Utilisateurs et leurs crédits
+        //Users with credits
         _mockUserRepository.Setup(repo => repo.GetUserById(1)).Returns(new User { Id = 1, Name = "John Doe", Credits = 100.0m });
         _mockUserRepository.Setup(repo => repo.GetUserById(2)).Returns(new User { Id = 2, Name = "Jane Smith", Credits = 50.0m });
         _mockUserRepository.Setup(repo => repo.GetUserById(3)).Returns(new User { Id = 3, Name = "Alice Brown", Credits = 0.0m });
         _mockUserRepository.Setup(repo => repo.GetUserById(It.Is<int>(id => id < 0)))
             .Throws(new InvalidOperationException("User not found"));
 
-        // Instancier le service réel avec les mocks
+        //Instanciate the services
         _paymentService = new MealPaymentService(_mockMealPlanRepository.Object, _mockUserRepository.Object, _transactions);
     }
 
     [Fact]
-    public void ProcessMealPayment_ShouldThrowException_WhenUserNotFound()
+    public void ProcessMealPayment_ShouldThrowException_WhenUserIsInvalid()
     {
         // Arrange
         int userId = -1, mealId = 1;
@@ -51,8 +51,8 @@ public class MealPaymentProcessingUt
     public void ProcessMealPayment_ShouldThrowExceptionWithCorrectMessage_WhenUserPlanNotFound()
     {
         // Arrange
-        int userId = -1; // Utilisateur valide
-        int mealId = 1; // Plan de repas inexistant
+        int userId = 4; //Invalid User
+        int mealId = 1; 
 
         // Act
         var exception = Assert.Throws<InvalidOperationException>(() =>
@@ -62,16 +62,6 @@ public class MealPaymentProcessingUt
         Assert.Equal("User not found", exception.Message);
     }
 
-    [Fact]
-    public void ProcessMealPayment_ShouldThrowException_WhenUserIsNull()
-    {
-        // Arrange
-        int userId = 6, mealId = 1;
-
-        // Act & Assert
-        Assert.Throws<InvalidOperationException>(() =>
-            _paymentService.ProcessMealPayment(userId, 50.0m, mealId));
-    }
 
     [Fact]
     public void ProcessMealPayment_ShouldThrowException_WhenMealPlanNotFound()
@@ -89,7 +79,7 @@ public class MealPaymentProcessingUt
     {
         // Arrange
         int userId = 1; // Utilisateur valide
-        int mealId = -1; // Plan de repas inexistant
+        int mealId = 4; // Plan de repas inexistant
 
         // Act
         var exception = Assert.Throws<InvalidOperationException>(() =>
