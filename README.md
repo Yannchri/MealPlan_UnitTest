@@ -21,15 +21,6 @@
      - [TransactionsHistoryUT](#2-transactionshistoryut)
      - [MealPlanManagementUt](#3-mealplanmanagementut)
      - [MealPaymentProcessingUt](#4-mealpaymentprocessingut)
-5. [Project Execution](#project-execution)
-   - [Prerequisites](#prerequisites)
-   - [Installation](#installation)
-   - [Running the Application](#running-the-application)
-   - [Running Unit Tests](#running-unit-tests)
-6. [Contributions](#contributions)
-   - [Contribution Guidelines](#contribution-guidelines)
-7. [License](#license)
-8. [Contact](#contact)
 
 ## Introduction
 
