@@ -609,3 +609,6 @@ Unit tests ensure the reliability and maintainability of the project. They cover
       Assert.Empty(_transactions);
       ```
 
+## Code Coverage Results
+![image](https://github.com/user-attachments/assets/33dc9630-55c0-4bfa-86c1-833864b2c844)
+
