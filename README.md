@@ -95,8 +95,21 @@ MealPlan_UnitTest/
 ## Unit Tests
 
 Unit tests ensure the reliability and maintainability of the project. They cover various scenarios such as validations, exceptions, and critical operations.
+We chose to test the service layer mostly to check the business logic and ensure the components interact correctly.
 
-### Test Documentation
+The test are divided into 3 sections related to the corresponding functionality : 
+
+- **Transaction History**  
+These tests checks if the service correctly returns all transactions for a valid user. It validates that the service behaves as expected when called with an existing user ID and ensures that all the relevant transactions are retrieved.
+
+- **Mealplan management**  
+This suite of unit tests is designed to validate the core functionalities of the MealPlanService class, which is responsible for managing meal plans, user subscriptions, and meal plan-related operations. The tests ensure that the service behaves as expected under a variety of scenarios, including valid and invalid inputs, edge cases, and boundary conditions.
+
+- **Payment processing**  
+This suite of unit tests focuses on verifying the functionality of the MealPaymentService class, which is responsible for processing payments related to meal plans. The tests cover various scenarios, ensuring the system behaves as expected under normal and exceptional conditions, and that critical edge cases are handled correctly.
+
+ 
+### Test Documentation and rationale
 
 #### 1. UserServiceUT
 
